@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>GPA Target Score Calculator</title>
+    <style>
+      body {
+        background: #0b1020;
+        color: #e8ecf8;
+        font-family: system-ui, Arial, sans-serif;
+      }
+      .container {
+        max-width: 1200px; /* Increased width for new columns */
+        margin: 30px auto;
+        padding: 24px;
+        background: #121a33;
+        border-radius: 12px;
+      }
+      select,
+      input {
+        background: #0e1530;
+        color: #e8ecf8;
+        border: 1px solid #223056;
+        padding: 6px 8px;
+        border-radius: 8px;
+        width: 60px; /* Uniform width */
+        box-sizing: border-box;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      th,
+      td {
+        border: 1px solid #223056;
+        padding: 8px;
+        text-align: center;
+      }
+      th {
+        color: #aeb8d3;
+      }
+      .generate-btn {
+        display: block;
+        width: 200px;
+        margin: 25px auto 0;
+        padding: 12px 20px;
+        background-color: #5d87ff;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .generate-btn:hover {
+        background-color: #4a6dcc;
+      }
+      .disabled-cell {
+        background-color: #1a2342;
+        color: #55628a;
+      }
+      .result-cell {
+        font-weight: bold;
+      }
+      .not-possible {
+        color: #ff6b6b;
+      }
+      .possible {
+        color: #7ed7c1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>GPA Target Score Calculator</h1>
+      <label for="branchSelect">Branch:</label>
+      <select id="branchSelect" style="width: auto;"></select>
+      <label for="semesterSelect" style="margin-left: 20px">Semester:</label>
+      <select id="semesterSelect" style="width: auto;"></select>
+      
+      <div id="coursesDiv"></div>
+      
+      <button id="generateBtn" class="generate-btn">Generate SEE Marks</button>
+
+    </div>
+
+    <script>
+      // --- DATA (Course structures) ---
+      const commonSem1 = [
+        { name: "Mathematics I", type: "theory", credits: 3 },
+        { name: "CP", type: "theoryLab", credits: 3 },
+        { name: "Physics", type: "theoryLab", credits: 3 },
+        { name: "Env. Sc.", type: "theory", credits: 3 },
+        { name: "Ele. Sc.", type: "theoryLab", credits: 3 },
+        { name: "General Eng.", type: "theoryLab", credits: 3 },
+      ];
+      const commonSem2 = [
+        { name: "Mathematics II", type: "theory", credits: 3 },
+        { name: "Chem./Web Dev.", type: "theoryLab", credits: 3 },
+        { name: "EDW", type: "theoryLab", credits: 3 },
+        { name: "Written Com.", type: "theory", credits: 3 },
+        { name: "AI/ML", type: "theoryLab", credits: 3 },
+        { name: "Stats.", type: "theoryLab", credits: 3 },
+        { name: "Cont. India", type: "theory", credits: 3 },
+      ];
+      const branches = {
+        CSE: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              { name: "MFCS", type: "theory", credits: 3 },
+              { name: "OOP", type: "theoryLab", credits: 3 },
+              { name: "DE", type: "theoryLab", credits: 3 },
+              { name: "Economics", type: "theory", credits: 3 },
+              { name: "ICC", type: "theory", credits: 3 },
+              { name: "DS", type: "theoryLab", credits: 3 },
+              { name: "Community Sevice", type: "Internship", credits: 3 },
+            ],
+            4: [
+              { name: "Comp. Architecture", type: "theory", credits: 3 },
+              { name: "DBMS", type: "theoryLab", credits: 3 },
+              { name: "OS", type: "theoryLab", credits: 3 },
+              { name: "Java Prog.", type: "theoryLab", credits: 3 },
+              { name: "DC", type: "theoryLab", credits: 3 },
+              { name: "OB", type: "theory", credits: 3 },
+            ],
+            5: [
+              { name: "Computer Networks", type: "theoryLab", credits: 4 },
+              { name: "ML", type: "theoryLab", credits: 4 },
+              { name: "DAA", type: "theoryLab", credits: 4 },
+              { name: "Depart. Elec.", type: "theoryLab", credits: 4 },
+              { name: "MnI", type: "theoryLab", credits: 4 },
+              { name: "Full Stack", type: "theoryLab", credits: 4 },
+            ],
+            6: [
+              { name: "CC", type: "theoryLab", credits: 4 },
+              { name: "SE", type: "theoryLab", credits: 4 },
+              { name: "Depart. Elec. 2", type: "theoryLab", credits: 4 },
+              { name: "HP", type: "theoryLab", credits: 4 },
+              { name: "Open Elective", type: "theoryLab", credits: 4 },
+              { name: "Summer Internship", type: "Internship", credits: 6 },
+            ],
+            7: [
+              { name: "PCD", type: "theoryLab", credits: 4 },
+              { name: "RMS", type: "theoryLab", credits: 4 },
+              { name: "Depart. Elec. 3", type: "theoryLab", credits: 4 },
+              { name: "Open Elective 2", type: "theoryLab", credits: 4 },
+              { name: "Open Elective 3", type: "theoryLab", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        "AI/ML": {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              { name: "MFCS", type: "theory", credits: 3 },
+              { name: "OOP", type: "theoryLab", credits: 3 },
+              { name: "DE", type: "theoryLab", credits: 3 },
+              { name: "Economics", type: "theory", credits: 3 },
+              { name: "ICC", type: "theory", credits: 3 },
+              { name: "DS", type: "theoryLab", credits: 3 },
+              { name: "Community Sevice", type: "Internship", credits: 3 },
+            ],
+            4: [
+              { name: "Comp. Architecture", type: "theory", credits: 3 },
+              { name: "DBMS", type: "theoryLab", credits: 3 },
+              { name: "OS", type: "theoryLab", credits: 3 },
+              { name: "ML", type: "theoryLab", credits: 3 },
+              { name: "DAA", type: "theoryLab", credits: 3 },
+              { name: "OB", type: "theory", credits: 3 },
+            ],
+            5: [
+              {
+                name: "Data Communication and Network",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Deep Learning", type: "theoryLab", credits: 4 },
+              {
+                name: "Artificial Intelligence",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+              {
+                name: "Computational Mathematics for AIML",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Machine Learning operations",
+                type: "theoryLab",
+                credits: 4,
+              },
+            ],
+            6: [
+              {
+                name: "Natural Language Computing",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Software Engineering", type: "theoryLab", credits: 4 },
+              { name: "Research Methodology", type: "theory", credits: 0 }, // no credits given in table
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              {
+                name: "Interdisciplinary Elective-I",
+                type: "elective",
+                credits: 4,
+              },
+              {
+                name: "Vision using Deep Learning",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Specialization Core", type: "theoryLab", credits: 4 }, // generic, edit to match your data
+            ],
+            7: [
+              { name: "Ethics for AI", type: "theoryLab", credits: 4 },
+              { name: "Research Methodology", type: "theoryLab", credits: 4 },
+              { name: "Department Elective-III", type: "elective", credits: 4 },
+              { name: "Department Elective-IV", type: "elective", credits: 4 },
+              {
+                name: "Interdisciplinary Elective-II",
+                type: "elective",
+                credits: 4,
+              },
+              {
+                name: "Internship / Summer Internship",
+                type: "internship",
+                credits: 6,
+              },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        MECHANICAL: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              { name: "Mechanics of Solids", type: "theoryLab", credits: 3 },
+              {
+                name: "Manufacturing Processes-I",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Material Science and Engineering",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Mathematics for Mechanical Engineers",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Industrial Drafting and Machine Element Design",
+                type: "drafting",
+                credits: 3,
+              },
+              { name: "Organizational Behaviour", type: "theory", credits: 3 },
+              {
+                name: "Internship-Community Services",
+                type: "internship",
+                credits: 3,
+              },
+            ],
+            4: [
+              { name: "Theory of Machines", type: "theoryLab", credits: 3 },
+              {
+                name: "Manufacturing Processes-II",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Metrology and Quality Control",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Thermodynamics", type: "theory", credits: 3 },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate-I",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            5: [
+              { name: "Dynamics of Machines", type: "theoryLab", credits: 4 },
+              { name: "Machine Design –I", type: "theoryLab", credits: 4 },
+              {
+                name: "Fluid Mechanics and Fluid Power",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Heat and Mass Transfer", type: "theoryLab", credits: 4 },
+              {
+                name: "Production Technology and Management",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+              {
+                name: "Campus to Corporate-II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            6: [
+              { name: "Machine Design-II", type: "theoryLab", credits: 4 },
+              {
+                name: "Power Plant and Renewable Energy Systems",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Applied Thermal Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+            ],
+            7: [
+              {
+                name: "Computer Integrated Manufacturing",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective- III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        CIVIL: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+
+            3: [
+              { name: "Mechanics of Solids", type: "theoryLab", credits: 3 },
+              { name: "Surveying", type: "theoryLab", credits: 3 },
+              { name: "Construction Materials", type: "theoryLab", credits: 3 },
+              {
+                name: "Mathematics for Civil Engineers",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Civil Engineering Drawing and Building Planning",
+                type: "drawing",
+                credits: 3,
+              },
+              { name: "Organizational Behaviour", type: "theory", credits: 3 },
+              {
+                name: "Internship-Community Services",
+                type: "internship",
+                credits: 3,
+              },
+            ],
+            4: [
+              { name: "Structural Mechanics", type: "theoryLab", credits: 3 },
+              {
+                name: "Construction Technology",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Geotechnical Engineering",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Fluid Mechanics", type: "theoryLab", credits: 3 },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate-I",
+                type: "supplementary",
+                credits: 0,
+              },
+              {
+                name: "Testing of Geotextiles for Infrastructure Applications",
+                type: "supplementaryLab",
+                credits: 0,
+              },
+            ],
+            5: [
+              {
+                name: "Design of Concrete Structures",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Water Resources Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Environmental Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Foundation Engineering", type: "theoryLab", credits: 4 },
+              {
+                name: "Transportation Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+              {
+                name: "Campus to Corporate-II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            6: [
+              {
+                name: "Construction Project Management",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Design of Steel Structures",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Port, Airport and Railway Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+            ],
+            7: [
+              { name: "Professional Practice", type: "theoryLab", credits: 4 },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective- III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        CHEMICAL: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              {
+                name: "Heat Transfer Operations",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Solid Fluid Operations", type: "theoryLab", credits: 3 },
+              { name: "Fluid Flow Operations", type: "theoryLab", credits: 3 },
+              {
+                name: "Mathematics for Chemical Engineering",
+                type: "theory",
+                credits: 3,
+              },
+              { name: "Organizational Behaviour", type: "theory", credits: 3 },
+              { name: "Process Calculations", type: "theory", credits: 3 },
+              {
+                name: "Internship-Community Services",
+                type: "internship",
+                credits: 3,
+              },
+            ],
+            4: [
+              {
+                name: "Mass Transfer Operations-I",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Chemical Process Industries",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Organic Chemistry", type: "theoryLab", credits: 3 },
+              {
+                name: "Chemical Engineering Thermodynamics",
+                type: "theory",
+                credits: 3,
+              },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate - I",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            5: [
+              {
+                name: "Mass Transfer Operations - II",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Instrumentation and Process Control",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Chemical Reaction Engineering - I",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Petroleum Refining Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Modelling & Process Simulations",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Dept. Elective - I", type: "elective", credits: 4 },
+              {
+                name: "Campus to Corporate - II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            6: [
+              {
+                name: "Chemical Reaction Engineering - II",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Process Equipment Design",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Environmental Pollution Control and Safety Management",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              {
+                name: "Department Elective - II",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective - I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+            ],
+            7: [
+              {
+                name: "Plant Design Economics and Process Management",
+                type: "theory",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective - III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective - II", type: "elective", credits: 4 },
+              { name: "Open Elective - III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        EE: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              {
+                name: "Mathematical Applications in Electrical Engineering",
+                type: "theory",
+                credits: 3,
+              },
+              { name: "Analog Electronics", type: "theoryLab", credits: 3 },
+              { name: "Digital Electronics", type: "theoryLab", credits: 3 },
+              {
+                name: "Electrical Measurements and Transducers",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Network Analysis", type: "theoryLab", credits: 3 },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Internship - Community Services",
+                type: "internship",
+                credits: 3,
+              },
+            ],
+            4: [
+              {
+                name: "Fundamentals of Power System",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Transformers and DC Machines",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Microprocessor and Microcontrollers",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Control System Theory", type: "theoryLab", credits: 3 },
+              { name: "Organisational Behaviour", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate-I",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            5: [
+              { name: "Rotating AC Machines", type: "theoryLab", credits: 4 },
+              {
+                name: "Electrical Power System Analysis",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Power Electronics and Applications",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Power System Protection and Switchgears",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Utilization of Electric Power",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+              {
+                name: "Campus to Corporate-II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            6: [
+              {
+                name: "Power System Operation and Control",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Electric Drives", type: "theoryLab", credits: 4 },
+              {
+                name: "Electronic System Design",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+            ],
+            7: [
+              {
+                name: "Electrical Machine Design",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective- III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        EI: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              { name: "Control Theory", type: "theory", credits: 3 },
+              { name: "Basic Electronics", type: "theoryLab", credits: 3 },
+              { name: "Circuit Theory", type: "theoryLab", credits: 3 },
+              { name: "Software For Engineers", type: "theoryLab", credits: 3 },
+              {
+                name: "Mathematics for Electronics and Instrumentation Engineers",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Internship-Community Services",
+                type: "internship",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate-I",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            4: [
+              { name: "Applied Electronics", type: "theoryLab", credits: 3 },
+              { name: "Electronic Circuits", type: "theoryLab", credits: 3 },
+              {
+                name: "Microcontroller and its Applications",
+                type: "theoryLab",
+                credits: 3,
+              },
+              {
+                name: "Programmable Logic Controllers",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Organizational Behaviours", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+            ],
+            5: [
+              { name: "Industrial Controls", type: "theoryLab", credits: 4 },
+              {
+                name: "Transducers and Measurement",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Industrial Drives", type: "theoryLab", credits: 4 },
+              {
+                name: "Fundamentals of Robotics",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Image Processing and its Applications",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+            ],
+            6: [
+              {
+                name: "Industrial Instrumentation",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Process Automation", type: "theoryLab", credits: 4 },
+              { name: "AI for Automation", type: "theoryLab", credits: 4 },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+              {
+                name: "Campus to Corporate-II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            7: [
+              { name: "Embedded System Design", type: "theoryLab", credits: 4 },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective- III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+        EC: {
+          semesters: {
+            1: commonSem1,
+            2: commonSem2,
+            3: [
+              { name: "Electronic Devices", type: "theoryLab", credits: 3 },
+              { name: "Digital Logic Design", type: "theoryLab", credits: 3 },
+              { name: "Network Theory", type: "theory", credits: 3 },
+              {
+                name: "Mathematics for Electronics & Communication Engineering",
+                type: "theory",
+                credits: 3,
+              },
+              { name: "Economics", type: "theory", credits: 3 },
+              {
+                name: "Indian Constitution and Citizenship",
+                type: "theory",
+                credits: 3,
+              },
+              {
+                name: "Internship-Community Services",
+                type: "internship",
+                credits: 3,
+              },
+              {
+                name: "Campus to Corporate-I",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            4: [
+              { name: "Electronics Circuits", type: "theoryLab", credits: 3 },
+              { name: "Signals and Systems", type: "theory", credits: 3 },
+              { name: "Integrated Electronics", type: "theoryLab", credits: 3 },
+              { name: "Communication Systems", type: "theoryLab", credits: 3 },
+              {
+                name: "FPGA based System Design",
+                type: "theoryLab",
+                credits: 3,
+              },
+              { name: "Organizational Behaviour", type: "theory", credits: 3 },
+            ],
+            5: [
+              { name: "VLSI Design", type: "theoryLab", credits: 4 },
+              { name: "Digital Communication", type: "theoryLab", credits: 4 },
+              {
+                name: "Electromagnetic & Wave Propagation",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Digital Signal Processing",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Microcontroller and Interfacing",
+                type: "theoryLab",
+                credits: 4,
+              },
+              { name: "Department Elective-I", type: "elective", credits: 4 },
+            ],
+            6: [
+              { name: "Computer Architecture", type: "theoryLab", credits: 4 },
+              { name: "Embedded Systems", type: "theoryLab", credits: 4 },
+              {
+                name: "Microwave and Antenna Engineering",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 0,
+              },
+              { name: "Department Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-I", type: "elective", credits: 4 },
+              { name: "Summer Internship", type: "internship", credits: 6 },
+              {
+                name: "Campus to Corporate-II",
+                type: "supplementary",
+                credits: 0,
+              },
+            ],
+            7: [
+              {
+                name: "Data Communication & Networks",
+                type: "theoryLab",
+                credits: 4,
+              },
+              {
+                name: "Research Methodology and Seminar",
+                type: "seminar",
+                credits: 4,
+              },
+              {
+                name: "Department Elective- III",
+                type: "elective",
+                credits: 4,
+              },
+              { name: "Open Elective-II", type: "elective", credits: 4 },
+              { name: "Open Elective-III", type: "elective", credits: 4 },
+            ],
+            8: [
+              { name: "Project/Internship", type: "Internship", credits: 12 },
+            ],
+          },
+        },
+      };
+
+      const branchSelect = document.getElementById("branchSelect");
+      const semesterSelect = document.getElementById("semesterSelect");
+      const coursesDiv = document.getElementById("coursesDiv");
+      const generateBtn = document.getElementById("generateBtn");
+      let courses = [];
+
+      // --- NEW, ACCURATE CALCULATION LOGIC ---
+
+      /**
+       * Calculates the final marks (out of 100) based on the specific weightages for each course type.
+       * @param {object} course The course object with its internal marks.
+       * @param {number} seeScore The score in the Semester End Exam (out of 100).
+       * @returns {number} The final calculated marks out of 100.
+       */
+      function calculateTotalMarks(course, seeScore) {
+        let finalMarks = 0;
+        
+        if (course.type === 'theory') {
+          // Rule for Theory: CE (60%) + SEE (40%)
+          const ceWeight = 0.6;
+          const seeWeight = 0.4;
+          
+          // CE component breakdown for Theory: 30% Assignment, 30% CT, 40% Sessional
+          let ceComponentScore = ( (course.a20 / 20) * 0.3 + (course.ct20 / 20) * 0.3 + (course.sess50 / 50) * 0.4 );
+          let ceComponentOutOf100 = ceComponentScore * 100;
+
+          finalMarks = (ceComponentOutOf100 * ceWeight) + (seeScore * seeWeight);
+
+        } else { 
+          // Rule for Theory+Lab: CE (30%) + LPW (30%) + SEE (40%)
+          const ceWeight = 0.3;
+          const lpwWeight = 0.3;
+          const seeWeight = 0.4;
+
+          // CE calculation for Theory+Lab: 20% Assignment, 20% Class Test, 60% Sessional
+          let ceComponentOutOf100 = ( (course.a20 / 20) * 0.2 + (course.ct20 / 20) * 0.2 + (course.sess50 / 50) * 0.6 ) * 100;
+
+          // LPW component is Lab File and Lab Exam (Total max marks = 140)
+          let lpwComponentOutOf100 = ((course.lf100 + course.le40) / 140) * 100;
+          
+          finalMarks = (ceComponentOutOf100 * ceWeight) + (lpwComponentOutOf100 * lpwWeight) + (seeScore * seeWeight);
+        }
+        
+        return Math.ceil(finalMarks); // Round up to the nearest integer
+      }
+
+      /**
+       * Finds the minimum SEE score needed to achieve a target total mark in a subject.
+       * @param {object} course - The course object.
+       * @param {number} targetMark - The target total mark (e.g., 90 for a 10 GP).
+       * @returns {number|string} - The required SEE score or "N/A".
+       */
+      function findRequiredSEE(course, targetMark) {
+        // Search from 0 to 100 for the minimum required SEE marks.
+        for (let see = 0; see <= 100; see++) {
+          const totalMarks = calculateTotalMarks(course, see);
+          if (totalMarks >= targetMark) {
+            return see; // Found the minimum required marks.
+          }
+        }
+        return "N/A"; // Not possible to achieve the target.
+      }
+
+      /**
+       * Main function triggered by the "Generate" button.
+       * Calculates required SEE for each course and updates the table.
+       */
+      function generateSEEMarks() {
+        // Define targets: GP -> required minimum total marks
+        const targets = [
+          { id: '90', mark: 90 }, // For 10 GP (A+)
+          { id: '85', mark: 80 }, // For 9 GP (A)
+          { id: '80', mark: 70 }  // For 8 GP (B+)
+        ];
+
+        courses.forEach((course, index) => {
+          if (course.credits > 0) {
+            targets.forEach(target => {
+              const requiredSEE = findRequiredSEE(course, target.mark);
+              const resultCell = document.getElementById(`see-${target.id}-${index}`);
+              
+              if (requiredSEE !== "N/A") {
+                resultCell.textContent = `${requiredSEE}`;
+                resultCell.className = 'result-cell possible';
+              } else {
+                resultCell.textContent = "N/P";
+                resultCell.className = 'result-cell not-possible';
+              }
+            });
+          }
+        });
+      }
+
+      // --- UI RENDERING AND EVENT HANDLING ---
+
+      function initBranches() {
+        branchSelect.innerHTML = "";
+        Object.keys(branches).forEach(branch => {
+          const option = document.createElement("option");
+          option.value = branch;
+          option.text = branch;
+          branchSelect.appendChild(option);
+        });
+      }
+
+      function updateSemesters() {
+        const branch = branchSelect.value;
+        semesterSelect.innerHTML = "";
+        const semesters = branches[branch].semesters;
+        Object.keys(semesters).forEach(sem => {
+          const option = document.createElement("option");
+          option.value = sem;
+          option.text = "Semester " + sem;
+          semesterSelect.appendChild(option);
+        });
+        updateCourses();
+      }
+
+      function updateCourses() {
+        const branch = branchSelect.value;
+        const sem = semesterSelect.value;
+        if (branches[branch] && branches[branch].semesters[sem]) {
+          courses = branches[branch].semesters[sem].map(course => ({
+            ...course,
+            a20: 0, ct20: 0, sess50: 0, lf100: 0, le40: 0,
+          }));
+          renderCourses();
+        }
+      }
+
+      function renderCourses() {
+        if (courses.length === 0) {
+          coursesDiv.innerHTML = "<p>No courses for this selection.</p>";
+          return;
+        }
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2">Name</th>
+                <th rowspan="2">Credits</th>
+                <th colspan="3">CE Component (Internals)</th>
+                <th colspan="2">LPW Component (Lab Work)</th>
+                <th colspan="3">Required SEE Marks for Grade Point</th>
+              </tr>
+              <tr>
+                <th>Assign (20)</th>
+                <th>CE Test (20)</th>
+                <th>Sess (50)</th>
+                <th>Lab File (100)</th>
+                <th>Lab Exam (40)</th>
+                <th>10 (A+)</th>
+                <th>9 (A)</th>
+                <th>8 (B+)</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        courses.forEach((c, i) => {
+          const isTheory = c.type === 'theory';
+          html += `
+              <tr>
+                <td>${c.name} (${c.type})</td>
+                <td>${c.credits}</td>
+                
+                <!-- CE Component columns -->
+                <td><input type="number" min="0" max="20" value="${c.a20}" oninput="updateField(${i}, 'a20', this.value)"/></td>
+                <td><input type="number" min="0" max="20" value="${c.ct20}" oninput="updateField(${i}, 'ct20', this.value)"/></td>
+                <td><input type="number" min="0" max="50" value="${c.sess50}" oninput="updateField(${i}, 'sess50', this.value)"/></td>
+                
+                <!-- LPW Component columns -->
+                ${isTheory ?
+                    `<td class="disabled-cell">N/A</td><td class="disabled-cell">N/A</td>` :
+                    `<td><input type="number" min="0" max="100" value="${c.lf100}" oninput="updateField(${i}, 'lf100', this.value)"/></td><td><input type="number" min="0" max="40" value="${c.le40}" oninput="updateField(${i}, 'le40', this.value)"/></td>`
+                }
+                
+                <!-- Result columns -->
+                <td id="see-90-${i}" class="result-cell">-</td>
+                <td id="see-85-${i}" class="result-cell">-</td>
+                <td id="see-80-${i}" class="result-cell">-</td>
+              </tr>
+          `;
+        });
+        html += "</tbody></table>";
+        coursesDiv.innerHTML = html;
+      }
+
+      window.updateField = function (i, field, value) {
+        courses[i][field] = Number(value) || 0;
+      };
+
+      // --- INITIAL SETUP ---
+      branchSelect.addEventListener("change", updateSemesters);
+      semesterSelect.addEventListener("change", updateCourses);
+      generateBtn.addEventListener("click", generateSEEMarks);
+
+      initBranches();
+      updateSemesters();
+    </script>
+  </body>
+</html>
+
+
