@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-t" />
     <title>GPA Target Score Calculator</title>
     <style>
       body {
@@ -70,6 +70,14 @@
       .possible {
         color: #7ed7c1;
       }
+      /* --- STYLE FOR THE NEW NOTE --- */
+      .disclaimer-note {
+        font-size: 12px;
+        text-align: center;
+        margin-top: 25px;
+        color: #aeb8d3;
+        opacity: 0.8;
+      }
     </style>
   </head>
   <body>
@@ -83,6 +91,10 @@
       <div id="coursesDiv"></div>
       
       <button id="generateBtn" class="generate-btn">Generate SEE Marks</button>
+      
+      <p class="disclaimer-note">
+        <strong>Note:</strong> This calculator is a tool for estimation purposes only. The required marks may vary based on official university calculations and rounding policies. Do not completely depend on these results.
+      </p>
 
     </div>
 
@@ -1019,8 +1031,8 @@
           // CE calculation for Theory+Lab: 20% Assignment, 20% Class Test, 60% Sessional
           let ceComponentOutOf100 = ( (course.a20 / 20) * 0.2 + (course.ct20 / 20) * 0.2 + (course.sess50 / 50) * 0.6 ) * 100;
 
-          // LPW component is Lab File and Lab Exam (Total max marks = 140)
-          let lpwComponentOutOf100 = ((course.lf100 + course.le40) / 140) * 100;
+          // LPW component (60% File, 40% Exam)
+          let lpwComponentOutOf100 = ((course.lf100 / 100) * 0.6 + (course.le40 / 40) * 0.4) * 100;
           
           finalMarks = (ceComponentOutOf100 * ceWeight) + (lpwComponentOutOf100 * lpwWeight) + (seeScore * seeWeight);
         }
@@ -1050,15 +1062,16 @@
        * Calculates required SEE for each course and updates the table.
        */
       function generateSEEMarks() {
-        // Define targets: GP -> required minimum total marks
+        // --- CHANGE 1: Targets updated based on the provided grade table ---
         const targets = [
-          { id: '90', mark: 90 }, // For 10 GP (A+)
-          { id: '85', mark: 80 }, // For 9 GP (A)
-          { id: '80', mark: 70 }  // For 8 GP (B+)
+          { id: 'o_grade', mark: 91 },      // O Grade (10 GP) requires 91+
+          { id: 'a_plus_grade', mark: 81 }, // A+ Grade (9 GP) requires 81+
+          { id: 'a_grade', mark: 71 }       // A Grade (8 GP) requires 71+
         ];
+        const gradedCourseTypes = ['theory', 'theoryLab'];
 
         courses.forEach((course, index) => {
-          if (course.credits > 0) {
+          if (course.credits > 0 && gradedCourseTypes.includes(course.type)) {
             targets.forEach(target => {
               const requiredSEE = findRequiredSEE(course, target.mark);
               const resultCell = document.getElementById(`see-${target.id}-${index}`);
@@ -1106,7 +1119,7 @@
         if (branches[branch] && branches[branch].semesters[sem]) {
           courses = branches[branch].semesters[sem].map(course => ({
             ...course,
-            a20: 0, ct20: 0, sess50: 0, lf100: 0, le40: 0,
+            a20: '', ct20: '', sess50: '', lf100: '', le40: '',
           }));
           renderCourses();
         }
@@ -1125,7 +1138,7 @@
                 <th rowspan="2">Credits</th>
                 <th colspan="3">CE Component (Internals)</th>
                 <th colspan="2">LPW Component (Lab Work)</th>
-                <th colspan="3">Required SEE Marks for Grade Point</th>
+                <th colspan="3">Required SEE Marks for Grade</th>
               </tr>
               <tr>
                 <th>Assign (20)</th>
@@ -1133,37 +1146,41 @@
                 <th>Sess (50)</th>
                 <th>Lab File (100)</th>
                 <th>Lab Exam (40)</th>
-                <th>10 (A+)</th>
-                <th>9 (A)</th>
-                <th>8 (B+)</th>
+                <th>O (10)</th>
+                <th>A+ (9)</th>
+                <th>A (8)</th>
               </tr>
             </thead>
             <tbody>
         `;
+        const gradedCourseTypes = ['theory', 'theoryLab'];
         courses.forEach((c, i) => {
           const isTheory = c.type === 'theory';
-          html += `
-              <tr>
-                <td>${c.name} (${c.type})</td>
-                <td>${c.credits}</td>
-                
-                <!-- CE Component columns -->
+          const isGradedCourse = gradedCourseTypes.includes(c.type);
+
+          html += `<tr><td>${c.name} (${c.type})</td><td>${c.credits}</td>`;
+
+          if (isGradedCourse) {
+            html += `
                 <td><input type="number" min="0" max="20" value="${c.a20}" oninput="updateField(${i}, 'a20', this.value)"/></td>
                 <td><input type="number" min="0" max="20" value="${c.ct20}" oninput="updateField(${i}, 'ct20', this.value)"/></td>
                 <td><input type="number" min="0" max="50" value="${c.sess50}" oninput="updateField(${i}, 'sess50', this.value)"/></td>
                 
-                <!-- LPW Component columns -->
                 ${isTheory ?
                     `<td class="disabled-cell">N/A</td><td class="disabled-cell">N/A</td>` :
                     `<td><input type="number" min="0" max="100" value="${c.lf100}" oninput="updateField(${i}, 'lf100', this.value)"/></td><td><input type="number" min="0" max="40" value="${c.le40}" oninput="updateField(${i}, 'le40', this.value)"/></td>`
                 }
                 
-                <!-- Result columns -->
-                <td id="see-90-${i}" class="result-cell">-</td>
-                <td id="see-85-${i}" class="result-cell">-</td>
-                <td id="see-80-${i}" class="result-cell">-</td>
-              </tr>
-          `;
+                <td id="see-o_grade-${i}" class="result-cell">-</td>
+                <td id="see-a_plus_grade-${i}" class="result-cell">-</td>
+                <td id="see-a_grade-${i}" class="result-cell">-</td>
+            `;
+          } else {
+            html += `
+                <td colspan="8" class="disabled-cell">Credit-only course, no marks entry required.</td>
+            `;
+          }
+          html += `</tr>`;
         });
         html += "</tbody></table>";
         coursesDiv.innerHTML = html;
@@ -1183,5 +1200,3 @@
     </script>
   </body>
 </html>
-
-
